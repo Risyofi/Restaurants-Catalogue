@@ -26,6 +26,24 @@ module.exports = {
           'css-loader',
           'sass-loader'
         ]
+      },
+      {
+        test: /\.(jpe?g|png)$/i,
+        use: [
+          'file-loader',
+          {
+            loader: 'image-webpack-loader',
+            options: {
+              mozjpeg: {
+                progressive: true,
+                quality: 65
+              },
+              webp: {
+                quality: 75
+              }
+            }
+          }
+        ]
       }
     ]
   },
@@ -36,6 +54,7 @@ module.exports = {
       filename: 'index.html',
       template: path.resolve(__dirname, 'src/templates/index.html')
     }),
+
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -64,6 +83,17 @@ module.exports = {
           options: {
             cacheName: 'font-awesome-icons'
           }
+        },
+        {
+          urlPattern: /\/images\/.*/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'images',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 30 * 24 * 60 * 60
+            }
+          }
         }
       ]
     }),
@@ -77,6 +107,7 @@ module.exports = {
       ]
     }),
 
+    new BundleAnalyzerPlugin(),
 
     new CompressionWebpackPlugin({
       filename: '[path][base].gz[query]',
@@ -89,7 +120,7 @@ module.exports = {
   ],
   optimization: {
     splitChunks: {
-      chunks: 'all',
+      chunks: 'async',
       minSize: 20000,
       maxSize: 70000,
       minChunks: 1,
@@ -100,7 +131,8 @@ module.exports = {
       cacheGroups: {
         defaultVendors: {
           test: /[\\/]node_modules[\\/]/,
-          priority: -10
+          priority: -10,
+          reuseExistingChunk: true
         },
         default: {
           minChunks: 2,
